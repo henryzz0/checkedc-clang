@@ -1,0 +1,13 @@
+diff a/clang/include/clang/AST/Type.h b/clang/include/clang/AST/Type.h	(rejected hunks)
+@@ -2218,9 +2218,11 @@
+    bool isAlignValT() const;                     // C++17 std::align_val_t
+    bool isStdByteType() const;                   // C++17 std::byte
+    bool isAtomicType() const;                    // C11 _Atomic()
+ +  bool isUndeducedAutoType() const;             // C++11 auto or
+ +                                                // C++14 decltype(auto)
+  
++ 
++ 
+  #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
+    bool is##Id##Type() const;
+  #include "clang/Basic/OpenCLImageTypes.def"

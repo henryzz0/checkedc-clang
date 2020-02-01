@@ -1247,6 +1247,9 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
     return CT;
   }
 
+  case Expr::CHKCBindTemporaryExprClass:
+    return canThrow(cast<CHKCBindTemporaryExpr>(E)->getSubExpr());
+
     // ObjC message sends are like function calls, but never have exception
     // specs.
   case Expr::ObjCMessageExprClass:
@@ -1306,6 +1309,7 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
   case Expr::DependentCoawaitExprClass:
   case Expr::CompoundAssignOperatorClass:
   case Expr::CStyleCastExprClass:
+  case Expr::BoundsCastExprClass:    
   case Expr::CXXStaticCastExprClass:
   case Expr::CXXFunctionalCastExprClass:
   case Expr::ImplicitCastExprClass:
@@ -1570,8 +1574,25 @@ CanThrowResult Sema::canThrow(const Stmt *S) {
     return mergeCanThrow(CT, canThrow(TS->getTryBody()));
   }
 
-  case Stmt::NoStmtClass:
-    llvm_unreachable("Invalid class for statement");
+  case Expr::PositionalParameterExprClass:
+  case Expr::CountBoundsExprClass:
+  case Expr::InteropTypeExprClass:
+  case Expr::NullaryBoundsExprClass:
+  case Expr::RangeBoundsExprClass:
+  case Expr::BoundsValueExprClass:
+    llvm_unreachable("do not expect bounds expressions");
+
+  case Expr::PackExprClass:
+    return canThrow(cast<PackExpr>(E)->getPackedExpr());
+
+#define STMT(CLASS, PARENT) case Expr::CLASS##Class:
+#define STMT_RANGE(Base, First, Last)
+#define LAST_STMT_RANGE(BASE, FIRST, LAST)
+#define EXPR(CLASS, PARENT)
+#define ABSTRACT_STMT(STMT)
+#include "clang/AST/StmtNodes.inc"
+  case Expr::NoStmtClass:
+    llvm_unreachable("Invalid class for expression");
   }
   llvm_unreachable("Bogus StmtClass");
 }

@@ -74,6 +74,7 @@ list(APPEND CLANG_TEST_DEPS
   clang-tblgen
   clang-offload-bundler
   clang-import-test
+  checked-c-convert
   clang-rename
   clang-refactor
   clang-diff

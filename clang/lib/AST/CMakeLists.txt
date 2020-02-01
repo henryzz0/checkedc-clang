@@ -25,6 +25,8 @@ add_clang_library(clangAST
   ASTStructuralEquivalence.cpp
   ASTTypeTraits.cpp
   AttrImpl.cpp
+  CanonBounds.cpp
+  CXXInheritance.cpp
   Comment.cpp
   CommentBriefParser.cpp
   CommentCommandTraits.cpp

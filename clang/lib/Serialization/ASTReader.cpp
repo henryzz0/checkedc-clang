@@ -6414,10 +6414,41 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     Error(Code.takeError());
     return QualType();
   }
+<<<<<<< HEAD
   if (Code.get() == TYPE_EXT_QUAL) {
     QualType baseType = Record.readQualType();
     Qualifiers quals = Record.readQualifiers();
     return Context.getQualifiedType(baseType, quals);
+=======
+  switch ((TypeCode)MaybeTypeCode.get()) {
+  case TYPE_EXT_QUAL: {
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of extended qualifier type");
+      return QualType();
+    }
+    QualType Base = readType(*Loc.F, Record, Idx);
+    Qualifiers Quals = Qualifiers::fromOpaqueValue(Record[Idx++]);
+    return Context.getQualifiedType(Base, Quals);
+  }
+
+  case TYPE_COMPLEX: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of complex type");
+      return QualType();
+    }
+    QualType ElemType = readType(*Loc.F, Record, Idx);
+    return Context.getComplexType(ElemType);
+  }
+
+  case TYPE_POINTER: {
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of pointer type");
+      return QualType();
+    }
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
+    unsigned kind = Record[1];
+    return Context.getPointerType(PointeeType, (CheckedPointerKind) kind);
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
   }
 
   auto maybeClass = getTypeClassForCode((TypeCode) Code.get());
@@ -6443,6 +6474,7 @@ class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
     return Reader.readTypeSourceInfo();
   }
 
+<<<<<<< HEAD
   NestedNameSpecifierLoc ReadNestedNameSpecifierLoc() {
     return Reader.readNestedNameSpecifierLoc();
   }
@@ -6465,6 +6497,51 @@ public:
   void VisitFunctionTypeLoc(FunctionTypeLoc);
   void VisitArrayTypeLoc(ArrayTypeLoc);
 };
+=======
+  case TYPE_CONSTANT_ARRAY: {
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    CheckedArrayKind Kind = (CheckedArrayKind) Record[3];
+    unsigned Idx = 4;
+    llvm::APInt Size = ReadAPInt(Record, Idx);
+    return Context.getConstantArrayType(ElementType, Size,
+                                         ASM, IndexTypeQuals, Kind);
+  }
+
+  case TYPE_INCOMPLETE_ARRAY: {
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    CheckedArrayKind Kind = (CheckedArrayKind) Record[3];
+    return Context.getIncompleteArrayType(ElementType, ASM, IndexTypeQuals,
+                                          Kind);
+  }
+
+  case TYPE_VARIABLE_ARRAY: {
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
+    unsigned IndexTypeQuals = Record[2];
+    // skip isChecked field at Record[3]
+    SourceLocation LBLoc = ReadSourceLocation(*Loc.F, Record[4]);
+    SourceLocation RBLoc = ReadSourceLocation(*Loc.F, Record[5]);
+    return Context.getVariableArrayType(ElementType, ReadExpr(*Loc.F),
+                                         ASM, IndexTypeQuals,
+                                         SourceRange(LBLoc, RBLoc));
+  }
+
+  case TYPE_VECTOR: {
+    if (Record.size() != 3) {
+      Error("incorrect encoding of vector type in AST file");
+      return QualType();
+    }
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    unsigned NumElements = Record[1];
+    unsigned VecKind = Record[2];
+    return Context.getVectorType(ElementType, NumElements,
+                                  (VectorType::VectorKind)VecKind);
+  }
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
 
 } // namespace clang
 
@@ -6494,17 +6571,49 @@ void TypeLocReader::VisitDecayedTypeLoc(DecayedTypeLoc TL) {
   // nothing to do
 }
 
+<<<<<<< HEAD
 void TypeLocReader::VisitAdjustedTypeLoc(AdjustedTypeLoc TL) {
   // nothing to do
 }
+=======
+    EPI.Variadic = Record[Idx++];
+    EPI.HasTrailingReturn = Record[Idx++];
+    EPI.TypeQuals = Qualifiers::fromOpaqueValue(Record[Idx++]);
+    EPI.NumTypeVars = Record[Idx++];
+    bool HasParamAnnots = Record[Idx++];
+    EPI.RefQualifier = static_cast<RefQualifierKind>(Record[Idx++]);
+    SmallVector<QualType, 8> ExceptionStorage;
+    readExceptionSpec(*Loc.F, ExceptionStorage, EPI.ExceptionSpec, Record, Idx);
+    EPI.ReturnAnnots = ReadBoundsAnnotations(*Loc.F);
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
 
 void TypeLocReader::VisitMacroQualifiedTypeLoc(MacroQualifiedTypeLoc TL) {
   TL.setExpansionLoc(readSourceLocation());
 }
 
+<<<<<<< HEAD
 void TypeLocReader::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
   TL.setCaretLoc(readSourceLocation());
 }
+=======
+    if (HasParamAnnots) {
+      SmallVector<BoundsAnnotations, 16> ParamAnnots;
+      for (unsigned I = 0; I != NumParams; ++I) {
+        ParamAnnots.push_back(ReadBoundsAnnotations(*Loc.F));
+      }
+      EPI.ParamAnnots = ParamAnnots.data();
+    } else
+      EPI.ParamAnnots = nullptr;
+
+    SmallVector<FunctionProtoType::ExtParameterInfo, 4> ExtParameterInfos;
+    if (Idx != Record.size()) {
+      for (unsigned I = 0; I != NumParams; ++I)
+        ExtParameterInfos.push_back(
+          FunctionProtoType::ExtParameterInfo
+                           ::getFromOpaqueValue(Record[Idx++]));
+      EPI.ExtParameterInfos = ExtParameterInfos.data();
+    }
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
 
 void TypeLocReader::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
   TL.setAmpLoc(readSourceLocation());
@@ -6536,9 +6645,23 @@ void TypeLocReader::VisitIncompleteArrayTypeLoc(IncompleteArrayTypeLoc TL) {
   VisitArrayTypeLoc(TL);
 }
 
+<<<<<<< HEAD
 void TypeLocReader::VisitVariableArrayTypeLoc(VariableArrayTypeLoc TL) {
   VisitArrayTypeLoc(TL);
 }
+=======
+  case TYPE_TYPEVARIABLE: {
+    unsigned int depth = Record[0];
+    unsigned int index = Record[1];
+    bool isInBoundsSafeInterface = Record[2];
+    return Context.getTypeVariableType(depth, index, isInBoundsSafeInterface);
+  }
+
+  case TYPE_DECLTYPE: {
+    QualType UnderlyingType = readType(*Loc.F, Record, Idx);
+    return Context.getDecltypeType(ReadExpr(*Loc.F), UnderlyingType);
+  }
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
 
 void TypeLocReader::VisitDependentSizedArrayTypeLoc(
                                             DependentSizedArrayTypeLoc TL) {
@@ -6601,6 +6724,395 @@ void TypeLocReader::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
   VisitFunctionTypeLoc(TL);
 }
 
+<<<<<<< HEAD
+=======
+  case TYPE_OBJC_TYPE_PARAM: {
+    unsigned Idx = 0;
+    ObjCTypeParamDecl *Decl
+      = ReadDeclAs<ObjCTypeParamDecl>(*Loc.F, Record, Idx);
+    unsigned NumProtos = Record[Idx++];
+    SmallVector<ObjCProtocolDecl*, 4> Protos;
+    for (unsigned I = 0; I != NumProtos; ++I)
+      Protos.push_back(ReadDeclAs<ObjCProtocolDecl>(*Loc.F, Record, Idx));
+    return Context.getObjCTypeParamType(Decl, Protos);
+  }
+
+  case TYPE_OBJC_OBJECT: {
+    unsigned Idx = 0;
+    QualType Base = readType(*Loc.F, Record, Idx);
+    unsigned NumTypeArgs = Record[Idx++];
+    SmallVector<QualType, 4> TypeArgs;
+    for (unsigned I = 0; I != NumTypeArgs; ++I)
+      TypeArgs.push_back(readType(*Loc.F, Record, Idx));
+    unsigned NumProtos = Record[Idx++];
+    SmallVector<ObjCProtocolDecl*, 4> Protos;
+    for (unsigned I = 0; I != NumProtos; ++I)
+      Protos.push_back(ReadDeclAs<ObjCProtocolDecl>(*Loc.F, Record, Idx));
+    bool IsKindOf = Record[Idx++];
+    return Context.getObjCObjectType(Base, TypeArgs, Protos, IsKindOf);
+  }
+
+  case TYPE_OBJC_OBJECT_POINTER: {
+    unsigned Idx = 0;
+    QualType Pointee = readType(*Loc.F, Record, Idx);
+    return Context.getObjCObjectPointerType(Pointee);
+  }
+
+  case TYPE_SUBST_TEMPLATE_TYPE_PARM: {
+    unsigned Idx = 0;
+    QualType Parm = readType(*Loc.F, Record, Idx);
+    QualType Replacement = readType(*Loc.F, Record, Idx);
+    return Context.getSubstTemplateTypeParmType(
+        cast<TemplateTypeParmType>(Parm),
+        Context.getCanonicalType(Replacement));
+  }
+
+  case TYPE_SUBST_TEMPLATE_TYPE_PARM_PACK: {
+    unsigned Idx = 0;
+    QualType Parm = readType(*Loc.F, Record, Idx);
+    TemplateArgument ArgPack = ReadTemplateArgument(*Loc.F, Record, Idx);
+    return Context.getSubstTemplateTypeParmPackType(
+                                               cast<TemplateTypeParmType>(Parm),
+                                                     ArgPack);
+  }
+
+  case TYPE_INJECTED_CLASS_NAME: {
+    CXXRecordDecl *D = ReadDeclAs<CXXRecordDecl>(*Loc.F, Record, Idx);
+    QualType TST = readType(*Loc.F, Record, Idx); // probably derivable
+    // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
+    // for AST reading, too much interdependencies.
+    const Type *T = nullptr;
+    for (auto *DI = D; DI; DI = DI->getPreviousDecl()) {
+      if (const Type *Existing = DI->getTypeForDecl()) {
+        T = Existing;
+        break;
+      }
+    }
+    if (!T) {
+      T = new (Context, TypeAlignment) InjectedClassNameType(D, TST);
+      for (auto *DI = D; DI; DI = DI->getPreviousDecl())
+        DI->setTypeForDecl(T);
+    }
+    return QualType(T, 0);
+  }
+
+  case TYPE_TEMPLATE_TYPE_PARM: {
+    unsigned Idx = 0;
+    unsigned Depth = Record[Idx++];
+    unsigned Index = Record[Idx++];
+    bool Pack = Record[Idx++];
+    TemplateTypeParmDecl *D
+      = ReadDeclAs<TemplateTypeParmDecl>(*Loc.F, Record, Idx);
+    return Context.getTemplateTypeParmType(Depth, Index, Pack, D);
+  }
+
+  case TYPE_DEPENDENT_NAME: {
+    unsigned Idx = 0;
+    ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
+    const IdentifierInfo *Name = GetIdentifierInfo(*Loc.F, Record, Idx);
+    QualType Canon = readType(*Loc.F, Record, Idx);
+    if (!Canon.isNull())
+      Canon = Context.getCanonicalType(Canon);
+    return Context.getDependentNameType(Keyword, NNS, Name, Canon);
+  }
+
+  case TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION: {
+    unsigned Idx = 0;
+    ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
+    NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
+    const IdentifierInfo *Name = GetIdentifierInfo(*Loc.F, Record, Idx);
+    unsigned NumArgs = Record[Idx++];
+    SmallVector<TemplateArgument, 8> Args;
+    Args.reserve(NumArgs);
+    while (NumArgs--)
+      Args.push_back(ReadTemplateArgument(*Loc.F, Record, Idx));
+    return Context.getDependentTemplateSpecializationType(Keyword, NNS, Name,
+                                                          Args);
+  }
+
+  case TYPE_DEPENDENT_SIZED_ARRAY: {
+    unsigned Idx = 0;
+
+    // ArrayType
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    ArrayType::ArraySizeModifier ASM
+      = (ArrayType::ArraySizeModifier)Record[Idx++];
+    unsigned IndexTypeQuals = Record[Idx++];
+    Idx++; // skip isChecked field
+
+    // DependentSizedArrayType
+    Expr *NumElts = ReadExpr(*Loc.F);
+    SourceRange Brackets = ReadSourceRange(*Loc.F, Record, Idx);
+
+    return Context.getDependentSizedArrayType(ElementType, NumElts, ASM,
+                                               IndexTypeQuals, Brackets);
+  }
+
+  case TYPE_TEMPLATE_SPECIALIZATION: {
+    unsigned Idx = 0;
+    bool IsDependent = Record[Idx++];
+    TemplateName Name = ReadTemplateName(*Loc.F, Record, Idx);
+    SmallVector<TemplateArgument, 8> Args;
+    ReadTemplateArgumentList(Args, *Loc.F, Record, Idx);
+    QualType Underlying = readType(*Loc.F, Record, Idx);
+    QualType T;
+    if (Underlying.isNull())
+      T = Context.getCanonicalTemplateSpecializationType(Name, Args);
+    else
+      T = Context.getTemplateSpecializationType(Name, Args, Underlying);
+    const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
+    return T;
+  }
+
+  case TYPE_ATOMIC: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of atomic type");
+      return QualType();
+    }
+    QualType ValueType = readType(*Loc.F, Record, Idx);
+    return Context.getAtomicType(ValueType);
+  }
+
+  case TYPE_PIPE: {
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of pipe type");
+      return QualType();
+    }
+
+    // Reading the pipe element type.
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    unsigned ReadOnly = Record[1];
+    return Context.getPipeType(ElementType, ReadOnly);
+  }
+
+  case TYPE_DEPENDENT_SIZED_VECTOR: {
+    unsigned Idx = 0;
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    Expr *SizeExpr = ReadExpr(*Loc.F);
+    SourceLocation AttrLoc = ReadSourceLocation(*Loc.F, Record, Idx);
+    unsigned VecKind = Record[Idx];
+
+    return Context.getDependentVectorType(ElementType, SizeExpr, AttrLoc,
+                                               (VectorType::VectorKind)VecKind);
+  }
+
+  case TYPE_DEPENDENT_SIZED_EXT_VECTOR: {
+    unsigned Idx = 0;
+
+    // DependentSizedExtVectorType
+    QualType ElementType = readType(*Loc.F, Record, Idx);
+    Expr *SizeExpr = ReadExpr(*Loc.F);
+    SourceLocation AttrLoc = ReadSourceLocation(*Loc.F, Record, Idx);
+
+    return Context.getDependentSizedExtVectorType(ElementType, SizeExpr,
+                                                  AttrLoc);
+  }
+
+  case TYPE_DEPENDENT_ADDRESS_SPACE: {
+    unsigned Idx = 0;
+
+    // DependentAddressSpaceType
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
+    Expr *AddrSpaceExpr = ReadExpr(*Loc.F);
+    SourceLocation AttrLoc = ReadSourceLocation(*Loc.F, Record, Idx);
+
+    return Context.getDependentAddressSpaceType(PointeeType, AddrSpaceExpr,
+                                                   AttrLoc);
+  }
+  }
+  llvm_unreachable("Invalid TypeCode!");
+}
+
+void ASTReader::readExceptionSpec(ModuleFile &ModuleFile,
+                                  SmallVectorImpl<QualType> &Exceptions,
+                                  FunctionProtoType::ExceptionSpecInfo &ESI,
+                                  const RecordData &Record, unsigned &Idx) {
+  ExceptionSpecificationType EST =
+      static_cast<ExceptionSpecificationType>(Record[Idx++]);
+  ESI.Type = EST;
+  if (EST == EST_Dynamic) {
+    for (unsigned I = 0, N = Record[Idx++]; I != N; ++I)
+      Exceptions.push_back(readType(ModuleFile, Record, Idx));
+    ESI.Exceptions = Exceptions;
+  } else if (isComputedNoexcept(EST)) {
+    ESI.NoexceptExpr = ReadExpr(ModuleFile);
+  } else if (EST == EST_Uninstantiated) {
+    ESI.SourceDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+    ESI.SourceTemplate = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+  } else if (EST == EST_Unevaluated) {
+    ESI.SourceDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+  }
+}
+
+namespace clang {
+
+class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
+  ModuleFile *F;
+  ASTReader *Reader;
+  const ASTReader::RecordData &Record;
+  unsigned &Idx;
+
+  SourceLocation ReadSourceLocation() {
+    return Reader->ReadSourceLocation(*F, Record, Idx);
+  }
+
+  TypeSourceInfo *GetTypeSourceInfo() {
+    return Reader->GetTypeSourceInfo(*F, Record, Idx);
+  }
+
+  NestedNameSpecifierLoc ReadNestedNameSpecifierLoc() {
+    return Reader->ReadNestedNameSpecifierLoc(*F, Record, Idx);
+  }
+
+  Attr *ReadAttr() {
+    return Reader->ReadAttr(*F, Record, Idx);
+  }
+
+public:
+  TypeLocReader(ModuleFile &F, ASTReader &Reader,
+                const ASTReader::RecordData &Record, unsigned &Idx)
+      : F(&F), Reader(&Reader), Record(Record), Idx(Idx) {}
+
+  // We want compile-time assurance that we've enumerated all of
+  // these, so unfortunately we have to declare them first, then
+  // define them out-of-line.
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+  void Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc);
+#include "clang/AST/TypeLocNodes.def"
+
+  void VisitFunctionTypeLoc(FunctionTypeLoc);
+  void VisitArrayTypeLoc(ArrayTypeLoc);
+};
+
+} // namespace clang
+
+void TypeLocReader::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+  // nothing to do
+}
+
+void TypeLocReader::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+  TL.setBuiltinLoc(ReadSourceLocation());
+  if (TL.needsExtraLocalData()) {
+    TL.setWrittenTypeSpec(static_cast<DeclSpec::TST>(Record[Idx++]));
+    TL.setWrittenSignSpec(static_cast<DeclSpec::TSS>(Record[Idx++]));
+    TL.setWrittenWidthSpec(static_cast<DeclSpec::TSW>(Record[Idx++]));
+    TL.setModeAttr(Record[Idx++]);
+  }
+}
+
+void TypeLocReader::VisitComplexTypeLoc(ComplexTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitPointerTypeLoc(PointerTypeLoc TL) {
+    TL.setKWLoc(ReadSourceLocation());
+    TL.setLeftSymLoc(ReadSourceLocation());
+    TL.setRightSymLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitDecayedTypeLoc(DecayedTypeLoc TL) {
+  // nothing to do
+}
+
+void TypeLocReader::VisitAdjustedTypeLoc(AdjustedTypeLoc TL) {
+  // nothing to do
+}
+
+void TypeLocReader::VisitMacroQualifiedTypeLoc(MacroQualifiedTypeLoc TL) {
+  TL.setExpansionLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
+  TL.setCaretLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
+  TL.setAmpLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
+  TL.setAmpAmpLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
+  TL.setStarLoc(ReadSourceLocation());
+  TL.setClassTInfo(GetTypeSourceInfo());
+}
+
+void TypeLocReader::VisitArrayTypeLoc(ArrayTypeLoc TL) {
+  TL.setLBracketLoc(ReadSourceLocation());
+  TL.setRBracketLoc(ReadSourceLocation());
+  if (Record[Idx++])
+    TL.setSizeExpr(Reader->ReadExpr(*F));
+  else
+    TL.setSizeExpr(nullptr);
+}
+
+void TypeLocReader::VisitConstantArrayTypeLoc(ConstantArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+
+void TypeLocReader::VisitIncompleteArrayTypeLoc(IncompleteArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+
+void TypeLocReader::VisitVariableArrayTypeLoc(VariableArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+
+void TypeLocReader::VisitDependentSizedArrayTypeLoc(
+                                            DependentSizedArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+
+void TypeLocReader::VisitDependentAddressSpaceTypeLoc(
+    DependentAddressSpaceTypeLoc TL) {
+
+    TL.setAttrNameLoc(ReadSourceLocation());
+    SourceRange range;
+    range.setBegin(ReadSourceLocation());
+    range.setEnd(ReadSourceLocation());
+    TL.setAttrOperandParensRange(range);
+    TL.setAttrExprOperand(Reader->ReadExpr(*F));
+}
+
+void TypeLocReader::VisitDependentSizedExtVectorTypeLoc(
+                                        DependentSizedExtVectorTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitVectorTypeLoc(VectorTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitDependentVectorTypeLoc(
+    DependentVectorTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitExtVectorTypeLoc(ExtVectorTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+  TL.setLocalRangeBegin(ReadSourceLocation());
+  TL.setLParenLoc(ReadSourceLocation());
+  TL.setRParenLoc(ReadSourceLocation());
+  TL.setExceptionSpecRange(SourceRange(Reader->ReadSourceLocation(*F, Record, Idx),
+                                       Reader->ReadSourceLocation(*F, Record, Idx)));
+  TL.setLocalRangeEnd(ReadSourceLocation());
+  for (unsigned i = 0, e = TL.getNumParams(); i != e; ++i) {
+    TL.setParam(i, Reader->ReadDeclAs<ParmVarDecl>(*F, Record, Idx));
+  }
+}
+
+void TypeLocReader::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
+  VisitFunctionTypeLoc(TL);
+}
+
+>>>>>>> d272f6ab59b... Merge branch 'master' into checkedc-clang-90-rc2
 void TypeLocReader::VisitFunctionNoProtoTypeLoc(FunctionNoProtoTypeLoc TL) {
   VisitFunctionTypeLoc(TL);
 }
@@ -6611,6 +7123,15 @@ void TypeLocReader::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
 
 void TypeLocReader::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   TL.setNameLoc(readSourceLocation());
+}
+
+void TypeLocReader::VisitTypeVariableTypeLoc(TypeVariableTypeLoc TL) {
+  TL.setNameLoc(ReadSourceLocation());
+}
+
+void TypeLocReader::VisitExistentialTypeLoc(ExistentialTypeLoc TL) {
+  // TODO: implement (checkedc issue #661)
+  assert(false && "currently unimplemented");
 }
 
 void TypeLocReader::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
