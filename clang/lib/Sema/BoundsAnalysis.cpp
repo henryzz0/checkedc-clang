@@ -426,10 +426,10 @@ ExprIntPairTy BoundsAnalysis::SplitIntoBaseOffset(const Expr *E) {
 
   // TmpBE is either (p + j) or (j + p) and RHS is r.
   auto *TmpBE =
-    new (Ctx) BinaryOperator(BE->getLHS(), BE->getRHS(), BE->getOpcode(),
-                             BE->getType(), BE->getValueKind(),
-                             BE->getObjectKind(), BE->getExprLoc(),
-                             BE->getFPFeatures());
+    BinaryOperator::Create(Ctx, BE->getLHS(), BE->getRHS(), BE->getOpcode(),
+                           BE->getType(), BE->getValueKind(),
+                           BE->getObjectKind(), BE->getExprLoc(),
+                           FPOptionsOverride());
 
   // TmpBE is (j + p) and RHS is r. So make the TmpBE as (r + p).
   assert(TmpBE->getLHS() && "invalid BinaryOperator expression");
@@ -467,10 +467,10 @@ void BoundsAnalysis::FillGenSet(Expr *E,
     // getBase() and getIdx() always present the normalized view: A[4].
     // In this case getBase() returns "A" and getIdx() returns "4".
     const auto *BO =
-      new (Ctx) BinaryOperator(AE->getBase(), AE->getIdx(),
-                               BinaryOperatorKind::BO_Add, AE->getType(),
-                               AE->getValueKind(), AE->getObjectKind(),
-                               AE->getExprLoc(), FPOptions());
+      BinaryOperator::Create(Ctx, AE->getBase(), AE->getIdx(),
+                             BinaryOperatorKind::BO_Add, AE->getType(),
+                             AE->getValueKind(), AE->getObjectKind(),
+                             AE->getExprLoc(), FPOptionsOverride());
 
     FillGenSetAndGetBoundsVars(BO, EB, SuccEB);
 
