@@ -191,7 +191,7 @@ int main(int argc, const char **argv) {
       return 1;
     }
 
-    BaseDir = cp.str();
+    BaseDir = (std::string)cp.str();
   }
 
   CommonOptionsParser OptionsParser(argc, argv, ConvertCategory);

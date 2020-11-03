@@ -61,8 +61,8 @@ PersistentSourceLoc::mkPSL(clang::SourceRange SR,
   FullSourceLoc tFSL(SR.getBegin(), SM);
   const FileEntry *fe = SM.getFileEntryForID(tFSL.getFileID());
   std::string feAbsS = "";
-  if (fe != nullptr && getAbsoluteFilePath(fe->getName(), feAbsS))
-    fn = sys::path::remove_leading_dotslash(feAbsS);
+  if (fe != nullptr && getAbsoluteFilePath((std::string)fe->getName(), feAbsS))
+    fn = (std::string)sys::path::remove_leading_dotslash(feAbsS);
 
   PersistentSourceLoc PSL(fn, 
     FESL.getExpansionLineNumber(), FESL.getExpansionColumnNumber());

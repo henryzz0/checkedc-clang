@@ -626,7 +626,7 @@ static void emit(Rewriter &R, ASTContext &C, std::set<FileID> &Files,
   if (getAbsoluteFilePath(BaseDir, baseDirFP))
     baseAbs = baseDirFP;
   sys::path::remove_filename(baseAbs);
-  std::string base = baseAbs.str();
+  std::string base = (std::string)baseAbs.str();
 
   SourceManager &SM = C.getSourceManager();
   if (OutputPostfix == "-") {
@@ -657,8 +657,8 @@ static void emit(Rewriter &R, ASTContext &C, std::set<FileID> &Files,
           // Write this file out if it was specified as a file on the command
           // line.
           std::string feAbsS = "";
-          if (getAbsoluteFilePath(FE->getName(), feAbsS))
-            feAbsS = sys::path::remove_leading_dotslash(feAbsS);
+          if (getAbsoluteFilePath((std::string)FE->getName(), feAbsS))
+            feAbsS = (std::string)sys::path::remove_leading_dotslash(feAbsS);
 
           if (canWrite(feAbsS, InOutFiles, base)) {
             std::error_code EC;

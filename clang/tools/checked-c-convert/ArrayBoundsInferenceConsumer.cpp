@@ -66,7 +66,7 @@ bool LocalVarABVisitor::isAllocatorCall(Expr *currExpr, Expr **sizeArgument) {
         if (calleeDecl) {
           StringRef funcName = calleeDecl->getName();
           // check if the called function is a known allocator?
-          if (LocalVarABVisitor::AllocatorFunctionNames.find(funcName) !=
+          if (LocalVarABVisitor::AllocatorFunctionNames.find((std::string)funcName) !=
               LocalVarABVisitor::AllocatorFunctionNames.end()) {
             if (sizeArgument != nullptr)
               *sizeArgument = CA->getArg(0);

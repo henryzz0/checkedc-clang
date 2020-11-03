@@ -270,7 +270,7 @@ public:
               dyn_cast<FunctionDecl>(CA->getCalleeDecl());
             if (calleeDecl) {
               // this is an allocator, should we treat it as safe?
-              if (!considerAllocUnsafe && isFunctionAllocator(calleeDecl->getName()))
+              if (!considerAllocUnsafe && isFunctionAllocator((std::string)calleeDecl->getName()))
                 rulesFired = true;
               else if (calleeDecl->getName().equals("malloc")) {
                 // It's a call to malloc. What about the parameter to the call?
@@ -448,7 +448,7 @@ public:
             assignType(ArgumentConstraints, CS.getWild());
           } else {
             if (Verbose) {
-              std::string funcName = FD->getName();
+              std::string funcName = (std::string)FD->getName();
               errs() << "Ignoring function as it contains varargs:" << funcName << "\n";
             }
           }

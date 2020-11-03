@@ -147,7 +147,7 @@ bool getAbsoluteFilePath(std::string fileName, std::string &absoluteFP) {
     std::error_code ec = llvm::sys::fs::make_absolute(abs_path);
     if (ec)
       return false;
-    AbsoluteFilePathCache[fileName] = abs_path.str();
+    AbsoluteFilePathCache[fileName] = (std::string)abs_path.str();
   }
   absoluteFP = AbsoluteFilePathCache[fileName];
   return true;

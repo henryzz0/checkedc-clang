@@ -18,7 +18,7 @@ using namespace clang;
 
 PointerVariableConstraint::PointerVariableConstraint(DeclaratorDecl *D,
                                                      ConstraintKey &K, Constraints &CS, const ASTContext &C) :
-        PointerVariableConstraint(D->getType(), K, D, D->getName(), CS, C) { }
+        PointerVariableConstraint(D->getType(), K, D, (std::string)D->getName(), CS, C) { }
 
 PointerVariableConstraint::PointerVariableConstraint(const QualType &QT, ConstraintKey &K,
                                                      DeclaratorDecl *D, std::string N, Constraints &CS,
@@ -426,7 +426,7 @@ PointerVariableConstraint::mkString(Constraints::EnvironmentMap &E, bool emitNam
 FunctionVariableConstraint::FunctionVariableConstraint(DeclaratorDecl *D,
                                                        ConstraintKey &K, Constraints &CS, const ASTContext &C) :
         FunctionVariableConstraint(D->getType().getTypePtr(), K, D,
-                                   (D->getDeclName().isIdentifier() ? D->getName() : ""), CS, C)
+                                   (D->getDeclName().isIdentifier() ? (std::string)D->getName() : ""), CS, C)
 { }
 
 FunctionVariableConstraint::FunctionVariableConstraint(const Type *Ty,
@@ -477,7 +477,7 @@ FunctionVariableConstraint::FunctionVariableConstraint(const Type *Ty,
         ParmVarDecl *PVD = FD->getParamDecl(i);
         if (PVD) {
           tmpD = PVD;
-          paramName = PVD->getName();
+          paramName = (std::string)PVD->getName();
         }
       }
 

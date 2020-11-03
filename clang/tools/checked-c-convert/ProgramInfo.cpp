@@ -734,7 +734,8 @@ ProgramInfo::getVariableHelper( Expr                            *E,
     V.insert(freeKey);
     CS.getOrCreateVar(freeKey);
     freeKey++;
-    ConstraintVariable *newC = new PointerVariableConstraint(V, "const char*", exr->getBytes(),
+    ConstraintVariable *newC = new PointerVariableConstraint(V, "const char*",
+                                                             (std::string)exr->getBytes(),
                                                              nullptr, false, false, "");
     // constrain the newly created variable to be NTArray.
     newC->constrainTo(CS, CS.getNTArr());
