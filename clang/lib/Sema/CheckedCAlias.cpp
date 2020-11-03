@@ -474,11 +474,11 @@ void Sema::ModifiedBoundsDependencies::Add(Expr *E,
     I->second.push_back(Pair);
 }
 
-void Sema::ModifiedBoundsDependencies::Dump(raw_ostream &OS) {
+void Sema::ModifiedBoundsDependencies::Dump(raw_ostream &OS, ASTContext &Context) {
   OS << "Mapping from expressions to modified bounds:\n";
   for (auto Iter = Tracker.begin(); Iter != Tracker.end(); ++Iter) {
     OS << "Expression:\n";
-    Iter->first->dump(OS);
+    Iter->first->dump(OS, Context);
     OS << "Modified:\n";
     for (auto VarIter = Iter->second.begin(); VarIter != Iter->second.end();
          ++VarIter) {
@@ -486,9 +486,9 @@ void Sema::ModifiedBoundsDependencies::Dump(raw_ostream &OS) {
       if (VarIter->Target.is<VarDecl *>())
         VarIter->Target.get<VarDecl *>()->dump(OS);
       else
-        VarIter->Target.get<MemberExpr *>()->dump(OS);
+        VarIter->Target.get<MemberExpr *>()->dump(OS, Context);
       OS << "Bounds:\n";
-      VarIter->Bounds->dump(OS);;
+      VarIter->Bounds->dump(OS, Context);;
     }
   }
 }

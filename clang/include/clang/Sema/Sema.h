@@ -5786,7 +5786,7 @@ public:
 
    void Add(Expr *E,  llvm::PointerUnion<VarDecl *, MemberExpr *> LValue,
             BoundsExpr *Bounds);
-   void Dump(raw_ostream &OS);
+   void Dump(raw_ostream &OS, ASTContext &Context);
 
    ModifiedBoundsDependencies() {}
    DependentBounds Tracker;
