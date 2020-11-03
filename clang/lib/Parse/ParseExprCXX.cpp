@@ -1302,8 +1302,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
       Actions.RecordParsingTemplateParameterDepth(
           CurTemplateDepthTracker.getOriginalDepth());
 
-      ParseParameterDeclarationClause(D.getContext(), Attr, ParamInfo,
-                                      EllipsisLoc);
+      ParseParameterDeclarationClause(D, Attr, ParamInfo, EllipsisLoc);
       // For a generic lambda, each 'auto' within the parameter declaration
       // clause creates a template type parameter, so increment the depth.
       // If we've parsed any explicit template parameters, then the depth will
@@ -3386,8 +3385,9 @@ ExprResult Parser::ParseRequiresExpression() {
       ParsedAttributes FirstArgAttrs(getAttrFactory());
       SourceLocation EllipsisLoc;
       llvm::SmallVector<DeclaratorChunk::ParamInfo, 2> LocalParameters;
-      ParseParameterDeclarationClause(DeclaratorContext::RequiresExprContext,
-                                      FirstArgAttrs, LocalParameters,
+      DeclSpec DS(AttrFactory);
+      Declarator D(DS, DeclaratorContext::RequiresExprContext);
+      ParseParameterDeclarationClause(D, FirstArgAttrs, LocalParameters,
                                       EllipsisLoc);
       if (EllipsisLoc.isValid())
         Diag(EllipsisLoc, diag::err_requires_expr_parameter_list_ellipsis);
