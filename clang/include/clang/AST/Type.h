@@ -3139,8 +3139,7 @@ public:
   /// can require, which limits the maximum size of the array.
   static unsigned getMaxSizeBits(const ASTContext &Context);
 
-  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx,
-               CheckedArrayKind kind) {
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx) {
     Profile(ID, Ctx, getElementType(), getSize(), getSizeExpr(),
             getSizeModifier(), getIndexTypeCVRQualifiers(), getKind());
   }
@@ -4628,7 +4627,7 @@ class TypeVariableType : public Type, public llvm::FoldingSetNode {
   bool isBoundsInterfaceType; // TODO: pack this into a bitfield.
 protected:
   TypeVariableType(unsigned int inDepth, unsigned int inIndex, bool inBoundsInterface)
-    : Type(TypeVariable, QualType(), false, false, false, false),
+    : Type(TypeVariable, QualType(), TypeDependence::None),
     depth(inDepth), index(inIndex), isBoundsInterfaceType(inBoundsInterface) { }
   friend class ASTContext;
 public:
@@ -4701,8 +4700,7 @@ class ExistentialType : public Type, public llvm::FoldingSetNode {
 
 public:
   ExistentialType(const Type *TypeVar, QualType InnerType, QualType Canon) :
-    Type(Existential, Canon, false /* Dependent */ , false /* InstantiationDependent */,
-      false /* VariablyModified */, false /* ContainsUnexpandedParameterPack */),
+    Type(Existential, Canon, TypeDependence::None),
     TypeVar(TypeVar), InnerType(InnerType) {
     if (!TypedefType::classof(TypeVar) && !TypeVariableType::classof(TypeVar)) {
       llvm_unreachable("Type variable should be a 'TypedefType' or 'TypeVariableType'");
