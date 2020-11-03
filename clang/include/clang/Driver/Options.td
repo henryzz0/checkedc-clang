@@ -859,7 +859,6 @@ def finject_verifier_calls : Flag<["-"], "finject-verifier-calls">, Group<f_Grou
   HelpText<"Injects calls to VERIFIER_assume and VERIFIER_error in the bitcode">;
 def funchecked_pointers_dynamic_check : Flag<["-"], "funchecked-pointers-dynamic-check">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Adds dynamic checks for unchecked pointers">;
-def fcaret_diagnostics : Flag<["-"], "fcaret-diagnostics">, Group<f_Group>;
 def fclang_abi_compat_EQ : Joined<["-"], "fclang-abi-compat=">, Group<f_clang_Group>,
   Flags<[CC1Option]>, MetaVarName<"<version>">, Values<"<major>.<minor>,latest">,
   HelpText<"Attempt to match the ABI of Clang <version>">;
