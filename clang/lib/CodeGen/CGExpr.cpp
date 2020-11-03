@@ -5018,13 +5018,6 @@ CodeGenFunction::EmitBoundsValueLValue(const BoundsValueExpr *E) {
   return getBoundsTemporaryLValueMapping(E->getTemporaryBinding());
 }
 
-LValue
-CodeGenFunction::EmitLambdaLValue(const LambdaExpr *E) {
-  AggValueSlot Slot = CreateAggTemp(E->getType(), "temp.lvalue");
-  EmitLambdaExpr(E, Slot);
-  return MakeAddrLValue(Slot.getAddress(), E->getType(), AlignmentSource::Decl);
-}
-
 LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
   RValue RV = EmitObjCMessageExpr(E);
 
