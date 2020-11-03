@@ -4356,8 +4356,6 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   ParseScope StructScope(this, structScopeFlag);
   Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
 
-  SmallVector<Decl *, 32> FieldDecls;
-
   // Delay parsing/semantic processing of member bounds expressions until after the
   // member list is parsed. For each member with a bounds declaration,
   // keep a list of tokens for the bounds expression.   Parsing/processing
@@ -4424,7 +4422,6 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
           Actions.ActOnField(getCurScope(), TagDecl,
                              FD.D.getDeclSpec().getSourceRange().getBegin(),
                              FD.D, FD.BitfieldSize);
-        FieldDecls.push_back(Field);
         FD.complete(Field);
 
         if (!FD.InteropType && !FD.BoundsExprTokens)
@@ -6442,7 +6439,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       if (IsFunctionDeclaration)
         Actions.ActOnFinishFunctionDeclarationDeclarator(D);
       PrototypeScope.Exit();
-    } else if (Tok.is(tok::l_square)) {
+    }
+    // Checked C - checked keyword is used checked array type
+    // as well as checked scope
+    // distinguish checked array type from other uses of checked keyword
+    else if (Tok.is(tok::l_square) ||
+            ((Tok.is(tok::kw__Checked) || Tok.is(tok::kw__Nt_checked))
+            && NextToken().is(tok::l_square))) {
+      // distinguish checked array from checked scope
       ParseBracketDeclarator(D);
     } else if (Tok.is(tok::kw_requires) && D.hasGroupingParens()) {
       // This declarator is declaring a function, but the requires clause is
@@ -6463,18 +6467,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     } else {
       break;
     }
-    // Checked C - checked keyword is used checked array type
-    // as well as checked scope
-    // distinguish checked array type from other uses of checked keyword
-    else if (Tok.is(tok::l_square) ||
-             ((Tok.is(tok::kw__Checked) || Tok.is(tok::kw__Nt_checked))
-              && NextToken().is(tok::l_square))) {
-       // distinguish checked array from checked scope
-       ParseBracketDeclarator(D);
-     } else {
-       break;
-     }
-   }
+  }
 }
 
 void Parser::ParseDecompositionDeclarator(Declarator &D) {
