@@ -1035,7 +1035,7 @@ bool ProgramInfo::addAllocationBasedSizeExpr(Decl *targetVar, Expr *sizeExpr) {
   return AllocationBasedSizeExprs[targetVar].insert(sizeExpr).second;
 }
 
-void ProgramInfo::printArrayVarsAndSizes(llvm::raw_ostream &O) {
+void ProgramInfo::printArrayVarsAndSizes(llvm::raw_ostream &O, ASTContext &Context) {
   if (!AllocationBasedSizeExprs.empty()) {
     O << "\n\nArray Variables and Sizes\n";
     for (const auto &currEl: AllocationBasedSizeExprs) {
@@ -1043,7 +1043,7 @@ void ProgramInfo::printArrayVarsAndSizes(llvm::raw_ostream &O) {
       currEl.first->dump(O);
       O << ", Possible Sizes:\n";
       for (auto sizeExpr: currEl.second) {
-        sizeExpr->dump(O);
+        sizeExpr->dump(O, Context);
         O << "\n";
       }
     }

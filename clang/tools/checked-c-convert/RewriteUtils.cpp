@@ -931,7 +931,7 @@ void RewriteConsumer::HandleTranslationUnit(ASTContext &Context) {
   emit(R, Context, Files, InOutFiles, BaseDir, OutputPostfix);
 
   HandleArrayVariablesBoundsDetection(&Context, Info);
-  Info.printArrayVarsAndSizes(errs());
+  Info.printArrayVarsAndSizes(errs(), Context);
 
   Info.exitCompilationUnit();
   return;

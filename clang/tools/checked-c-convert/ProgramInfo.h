@@ -123,7 +123,7 @@ public:
 
   bool insertPotentialArrayVar(Decl *var);
 
-  void printArrayVarsAndSizes(llvm::raw_ostream &O);
+  void printArrayVarsAndSizes(llvm::raw_ostream &O, ASTContext &Context);
 
   // get on demand function declaration constraint. This is needed for functions
   // that do not have corresponding declaration.
