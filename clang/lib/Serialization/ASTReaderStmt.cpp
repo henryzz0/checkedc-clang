@@ -623,7 +623,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
     SmallVector<TypeArgument, 16> typeArgumentInfos;
     for (unsigned i = 0; i < numTypeNameInfos; i++) {
       QualType tempType = Record.readType();
-      TypeSourceInfo *tempSourceInfo = Record.getTypeSourceInfo();
+      TypeSourceInfo *tempSourceInfo = Record.readTypeSourceInfo();
       typeArgumentInfos.push_back({tempType, tempSourceInfo});
     }
     E->SetGenericInstInfo(Record.getContext(), typeArgumentInfos);
@@ -1186,10 +1186,10 @@ void ASTStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
 
 void ASTStmtReader::VisitBoundsCastExpr(BoundsCastExpr *E) {
   VisitExplicitCastExpr(E);
-  SourceRange R = ReadSourceRange();
+  SourceRange R = readSourceRange();
   E->LPLoc = R.getBegin();
   E->RParenLoc = R.getEnd();
-  R= ReadSourceRange();
+  R= readSourceRange();
   E->AngleBrackets=R;
   E->setBoundsExpr(dyn_cast<BoundsExpr>(Record.readSubExpr()));
 }
@@ -1444,15 +1444,15 @@ void ASTStmtReader::VisitCountBoundsExpr(CountBoundsExpr *E) {
   VisitExpr(E);
   E->setKind((BoundsExpr::Kind)Record.readInt());
   E->setCountExpr(Record.readSubExpr());
-  E->StartLoc = ReadSourceLocation();
-  E->EndLoc = ReadSourceLocation();
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
 }
 
 void ASTStmtReader::VisitNullaryBoundsExpr(NullaryBoundsExpr *E) {
   VisitExpr(E);
   E->setKind((BoundsExpr::Kind)Record.readInt());
-  E->StartLoc = ReadSourceLocation();
-  E->EndLoc = ReadSourceLocation();
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
 }
 
 void ASTStmtReader::VisitRangeBoundsExpr(RangeBoundsExpr *E) {
@@ -1460,8 +1460,8 @@ void ASTStmtReader::VisitRangeBoundsExpr(RangeBoundsExpr *E) {
   E->setKind((BoundsExpr::Kind)Record.readInt());
   E->setLowerExpr(Record.readSubExpr());
   E->setUpperExpr(Record.readSubExpr());
-  E->StartLoc = ReadSourceLocation();
-  E->EndLoc = ReadSourceLocation();
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
   // TODO: Github issue #332.  RelativeBoundsClause expressions are
   // not being serialized.
   E->setRelativeBoundsClause(nullptr);
@@ -1469,9 +1469,9 @@ void ASTStmtReader::VisitRangeBoundsExpr(RangeBoundsExpr *E) {
 
 void ASTStmtReader::VisitInteropTypeExpr(InteropTypeExpr *E) {
   VisitExpr(E);
-  E->setTypeInfoAsWritten(GetTypeSourceInfo());
-  E->StartLoc = ReadSourceLocation();
-  E->EndLoc = ReadSourceLocation();
+  E->setTypeInfoAsWritten(readTypeSourceInfo());
+  E->StartLoc = readSourceLocation();
+  E->EndLoc = readSourceLocation();
 }
 
 void ASTStmtReader::VisitPositionalParameterExpr(

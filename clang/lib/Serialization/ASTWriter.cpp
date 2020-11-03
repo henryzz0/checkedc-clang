@@ -172,16 +172,17 @@ public:
                             /*abbrev*/ 0);
   }
 };
-=======
-  if (T->hasParamAnnots())
-    for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
 
-  if (T->hasExtParameterInfos()) {
-    for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
-      Record.push_back(T->getExtParameterInfo(I).getOpaqueValue());
-  }
+class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
+  ASTRecordWriter &Record;
 
-  // AbbrevToUse indicates whether to compress a record in a domain-specifc
+public:
+  TypeLocWriter(ASTRecordWriter &Record) : Record(Record) {}
+
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+    void Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc);
+#include "clang/AST/TypeLocNodes.def"
 
   void VisitArrayTypeLoc(ArrayTypeLoc TyLoc);
   void VisitFunctionTypeLoc(FunctionTypeLoc TyLoc);
@@ -208,9 +209,7 @@ void TypeLocWriter::VisitComplexTypeLoc(ComplexTypeLoc TL) {
 }
 
 void TypeLocWriter::VisitPointerTypeLoc(PointerTypeLoc TL) {
-  Record.AddSourceLocation(TL.getKWLoc());
-  Record.AddSourceLocation(TL.getLeftSymLoc());
-  Record.AddSourceLocation(TL.getRightSymLoc());
+  Record.AddSourceLocation(TL.getStarLoc());
 }
 
 void TypeLocWriter::VisitDecayedTypeLoc(DecayedTypeLoc TL) {

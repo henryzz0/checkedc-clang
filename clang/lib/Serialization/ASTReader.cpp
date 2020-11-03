@@ -6614,7 +6614,7 @@ void TypeLocReader::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
 }
 
 void TypeLocReader::VisitTypeVariableTypeLoc(TypeVariableTypeLoc TL) {
-  TL.setNameLoc(ReadSourceLocation());
+  TL.setNameLoc(readSourceLocation());
 }
 
 void TypeLocReader::VisitExistentialTypeLoc(ExistentialTypeLoc TL) {
