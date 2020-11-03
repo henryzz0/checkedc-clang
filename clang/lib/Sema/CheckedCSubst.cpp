@@ -17,6 +17,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/ADT/DenseSet.h"
+#include <stack>
 
 using namespace clang;
 using namespace sema;
