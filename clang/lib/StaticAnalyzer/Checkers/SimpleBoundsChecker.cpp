@@ -31,9 +31,10 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/DynamicSize.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConv.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/SMTSolver.h"
+#include "llvm/Support/SMTAPI.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -102,9 +103,10 @@ void SimpleBoundsChecker::checkLocation(SVal l, bool isLoad, const Stmt *LoadS,
 
   // Get the size of the array.
   DefinedOrUnknownSVal NumElements =
-      C.getStoreManager().getSizeInElements(State,
-                                            ER->getSuperRegion(),
-                                            ER->getValueType());
+      getDynamicElementCount(State,
+                             ER->getSuperRegion(),
+                             SvalBuilder,
+                             ER->getValueType());
 
   ProgramStateRef StInBound = State->assumeInBound(Idx, NumElements, true);
   ProgramStateRef StOutBound = State->assumeInBound(Idx, NumElements, false);
@@ -122,7 +124,7 @@ void SimpleBoundsChecker::checkLocation(SVal l, bool isLoad, const Stmt *LoadS,
   // For handling complex expressions over indices:
 
   // 1. Create a Z3 instance
-  SMTSolverRef Solver = CreateZ3Solver();
+  llvm::SMTSolverRef Solver = llvm::CreateZ3Solver();
 
   // 2. Get the Symbolic Expr of the index and bounds expressions
   //
@@ -197,23 +199,23 @@ void SimpleBoundsChecker::checkLocation(SVal l, bool isLoad, const Stmt *LoadS,
   //       generalize for bounds(LB, UB)
   //
   // SMT expression of the bounds expression
-  SMTExprRef SmtBE = SMTConv::getExpr(Solver, Ctx, SymBE);
+  llvm::SMTExprRef SmtBE = SMTConv::getExpr(Solver, Ctx, SymBE);
   // SMT expression of the index
-  SMTExprRef SmtIdx = SMTConv::getExpr(Solver, Ctx, SymIdx);
+  llvm::SMTExprRef SmtIdx = SMTConv::getExpr(Solver, Ctx, SymIdx);
   // SMT expression for (idx >= UpperBound)
-  SMTExprRef OverUB = Solver->mkBVSge(SmtIdx, SmtBE);
+  llvm::SMTExprRef OverUB = Solver->mkBVSge(SmtIdx, SmtBE);
   // SMT expression for (idx < LowerBound)
-  SMTExprRef UnderLB =
+  llvm::SMTExprRef UnderLB =
     Solver->mkBVSlt(SmtIdx, Solver->mkBitvector(llvm::APSInt(32), 32));
 
-  SMTExprRef SmtOOBounds = Solver->mkOr(UnderLB, OverUB);
+  llvm::SMTExprRef SmtOOBounds = Solver->mkOr(UnderLB, OverUB);
 
   // Forcing the expression in the 'count' bounds to be positive '> 0'
-  SMTExprRef PositiveBE =
+  llvm::SMTExprRef PositiveBE =
     Solver->mkBVSgt(SmtBE, Solver->mkBitvector(llvm::APSInt(32), 32));
 
   // the final SMT expression
-  SMTExprRef Constraint = Solver->mkAnd(PositiveBE, SmtOOBounds);
+  llvm::SMTExprRef Constraint = Solver->mkAnd(PositiveBE, SmtOOBounds);
 
 #if DEBUG_DUMP
   llvm::errs() << "SMT constraints for (LB <= Idx < UB) expression:\n";
@@ -262,11 +264,12 @@ void SimpleBoundsChecker::reportOutofBoundsAccess(ProgramStateRef OutBound,
           this, "Out-of-bound array access",
           "Access out-of-bound array element (buffer overflow)"));
 
+  // TODO: checkedc-clang issue #931: uncomment below to generate a BugReport.
   // Generate a report for this bug.
-  auto Report = llvm::make_unique<BugReport>(*BT, BT->getDescription(), N);
+  // auto Report = std::make_unique<BugReport>(*BT, BT->getDescription(), N);
 
-  Report->addRange(LoadS->getSourceRange());
-  C.emitReport(std::move(Report));
+  // Report->addRange(LoadS->getSourceRange());
+  // C.emitReport(std::move(Report));
   return;
 }
 
@@ -435,8 +438,11 @@ SVal SimpleBoundsChecker::replaceSVal(ProgramStateRef State,
   return NewE;
 }
 
-
-
 void ento::registerSimpleBoundsChecker(CheckerManager &mgr) {
   mgr.registerChecker<SimpleBoundsChecker>();
+}
+
+// This checker should be enabled regardless of how language options are set.
+bool ento::shouldRegisterSimpleBoundsChecker(const CheckerManager &mgr) {
+  return true;
 }
