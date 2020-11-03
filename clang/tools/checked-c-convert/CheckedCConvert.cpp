@@ -127,7 +127,9 @@ newFrontendActionFactoryA(ProgramInfo &I) {
   public:
     explicit ArgFrontendActionFactory(ProgramInfo &I) : Info(I) {}
 
-    FrontendAction *create() override { return new T(Info); }
+    std::unique_ptr<FrontendAction> create() override { 
+      return std::unique_ptr<FrontendAction>(new T(Info));
+    }
 
   private:
     ProgramInfo &Info;
@@ -145,7 +147,9 @@ newFrontendActionFactoryB(ProgramInfo &I, std::set<std::string> &PS) {
     explicit ArgFrontendActionFactory(ProgramInfo &I,
       std::set<std::string> &PS) : Info(I),Files(PS) {}
 
-    FrontendAction *create() override { return new T(Info, Files); }
+    std::unique_ptr<FrontendAction> create() override {
+      return std::unique_ptr<FrontendAction>(new T(Info, Files));
+    }
 
   private:
     ProgramInfo &Info;
