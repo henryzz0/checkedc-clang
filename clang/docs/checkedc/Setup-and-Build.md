@@ -23,19 +23,30 @@ of Windows too.
  
 Prerequisites:
 
-- Visual Studio 2017 or later, Python (version 2.7), and versions of UNIX
-  command-line tools.  We recommend using Visual Studio 2019.
-  - For VS2019, go to Tools -> Get Tools and Features (this opens the VS installer)
-  - Go to Individual Components
-  - Scroll to the “SDKs, libraries, and frameworks” section (near the bottom of the list)
-  - Check “C++ ATL for latest v142 build tools (x86 and x64)”
-  - Install
+- Visual Studio 2017 or later, and UNIX command-line tools.  We recommend using Visual Studio 2019.
 
-- For UNIX command-line tools, install them via [GnuWin32](https://sourceforge.net/projects/getgnuwin32/postdownload)
-  - In cmd prompt, cd to the download dir and run:
-  - download.bat
-  - install.bat C:\GnuWin32
-  - set PATH=C:\GnuWin32\bin;%PATH%
+    - Install Visual Studio 2019. During the installation of VS2019, choose the workload "Desktop Development with C++", and
+      ensure that  “C++ ATL for latest v142 build tools (x86 and x64)” is selected in the "Optional" section of the
+      "Installation Details" panel on the right hand side.
+    - Alternatively, if you already have Visual Studio 2019 installed, 
+        - In the VS toolbar, go to Tools -> Get Tools and Features (this opens the VS installer)
+        - Go to Individual Components
+        - Scroll to the “SDKs, libraries, and frameworks” section (near the bottom of the list)
+        - Check “C++ ATL for latest v142 build tools (x86 and x64)”
+        - Install
+    - For UNIX command-line tools,
+        - From the site [GnuWin32](https://sourceforge.net/projects/getgnuwin32/postdownload), download GetGnuWin32-0.6.3.exe
+	  to your Downloads folder. 
+        - In cmd prompt, cd to the download dir and execute .\GetGnuWin32-0.6.3.exe
+        - The above step creates a folder called GetGnuWin32 in the Downloads folder. Change directory to GetGnuWin32.
+        - Execute .\download.bat.
+        - After the above step completes, execute .\install.bat C:\GnuWin32.  
+	  During installation, you may be asked if you want more information about recent builds of the following utilities:
+	  UnZip 6.00, OpenSSL 1.0.2n, Wget 1.12.1-dev, Sort 7.6. This may be followed by another question about installing them.
+	  You may say yes to both.
+        - set PATH=C:\GnuWin32\bin;%PATH%
+
+- If Python is not already available on your machine, please install Python version 2.7 or later.
 
 - If Ninja is not already available on your machine, you can download it from [here](https://github.com/ninja-build/ninja/releases).
   Remember to set path to the ninja executable.
