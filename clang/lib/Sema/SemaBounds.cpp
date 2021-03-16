@@ -3826,6 +3826,16 @@ namespace {
                              CheckingState &State, bool CheckBounds = false) {
       BoundsExpr *ResultBounds = CreateBoundsEmpty();
 
+      BoundsExpr *DeclaredBounds = S.NormalizeBounds(D);
+      DeclRefExpr *TargetDeclRef = nullptr;
+
+      // If D has declared bounds, initialize the observed bounds of D to
+      // D's normalized declared bounds.
+      if (DeclaredBounds) {
+        TargetDeclRef = ExprCreatorUtil::CreateVarUse(S, D);
+        State.ObservedBounds[D] = DeclaredBounds;
+      }
+
       Expr *Init = D->getInit();
       BoundsExpr *InitBounds = nullptr;
       // If there is an initializer, check it, and update the state to record
@@ -3837,10 +3847,8 @@ namespace {
 
         // Create an rvalue expression for v. v could be an array or
         // non-array variable.
-        DeclRefExpr *TargetDeclRef =
-          DeclRefExpr::Create(S.getASTContext(), NestedNameSpecifierLoc(),
-                              SourceLocation(), D, false, SourceLocation(),
-                              D->getType(), ExprValueKind::VK_LValue);
+        if (!TargetDeclRef)
+          TargetDeclRef = ExprCreatorUtil::CreateVarUse(S, D);
         CastKind Kind;
         QualType TargetTy;
         if (D->getType()->isArrayType()) {
@@ -3867,7 +3875,6 @@ namespace {
         return ResultBounds;
 
       // Handle variables with bounds declarations
-      BoundsExpr *DeclaredBounds = D->getBoundsExpr();
       if (!DeclaredBounds || DeclaredBounds->isInvalid() ||
           DeclaredBounds->isUnknown())
         return ResultBounds;
