@@ -6679,9 +6679,15 @@ BoundsExpr *Sema::NormalizeBounds(const VarDecl *D) {
   if (BoundsExpr *NormalizedBounds = D->getNormalizedBounds())
     return NormalizedBounds;
 
+  // If D does not have declared bounds, D cannot have normalized
+  // declared bounds.
+  const BoundsExpr *DeclaredBounds = D->getBoundsExpr();
+  if (!DeclaredBounds)
+    return nullptr;
+
   // Normalize the bounds of D to a RangeBoundsExpr and attach the normalized
   // bounds to D to avoid recomputing them.
-  BoundsExpr *Bounds = ExpandBoundsToRange(D, D->getBoundsExpr());
+  BoundsExpr *Bounds = ExpandBoundsToRange(D, DeclaredBounds);
   D->setNormalizedBounds(Bounds);
   return Bounds;
 }
