@@ -820,46 +820,6 @@ namespace {
 }
 
 namespace {
-  class DeclaredBoundsHelper : public RecursiveASTVisitor<DeclaredBoundsHelper> {
-    private:
-      Sema &SemaRef;
-      BoundsContextTy &BoundsContextRef;
-
-    public:
-      DeclaredBoundsHelper(Sema &SemaRef, BoundsContextTy &Context) :
-        SemaRef(SemaRef),
-        BoundsContextRef(Context) {}
-
-      // If a variable declaration has declared bounds, modify BoundsContextRef
-      // to map the variable declaration to the normalized declared bounds.
-      // 
-      // Returns true if visiting the variable declaration did not terminate
-      // early.  Visiting variable declarations in DeclaredBoundsHelper should
-      // never terminate early.
-      bool VisitVarDecl(const VarDecl *D) {
-        if (!D)
-          return true;
-        if (D->isInvalidDecl())
-          return true;
-        if (!D->hasBoundsExpr())
-          return true;
-        // The bounds expressions in the bounds context should be normalized
-        // to range bounds.
-        if (BoundsExpr *Bounds = SemaRef.NormalizeBounds(D))
-          BoundsContextRef[D] = Bounds;
-        return true;
-      }
-  };
-
-  // GetDeclaredBounds modifies the bounds context to map any variables
-  // declared in S to their declared bounds (if any).
-  void GetDeclaredBounds(Sema &SemaRef, BoundsContextTy &Context, Stmt *S) {
-    DeclaredBoundsHelper Declared(SemaRef, Context);
-    Declared.TraverseStmt(S);
-  }
-}
-
-namespace {
   class CheckBoundsDeclarations {
   private:
     Sema &S;
@@ -2871,12 +2831,6 @@ namespace {
             S->dump(llvm::outs(), Context);
             llvm::outs().flush();
 #endif
-            // Modify the ObservedBounds context to include any variables with
-            // bounds that are declared in S.  Before checking S, the observed
-            // bounds for each variable v that is in scope are the widened
-            // bounds for v (if any), or the declared bounds for v (if any).
-            GetDeclaredBounds(this->S, BlockState.ObservedBounds, S);
-
             BoundsContextTy InitialObservedBounds = BlockState.ObservedBounds;
             BlockState.Reset();
 
