@@ -167,6 +167,15 @@ namespace {
         }
         return CreateImplicitCast(SemaRef, E, Kind, TargetTy);
       }
+
+      // Returns a DeclRefExpr representing a usage of the given VarDecl.
+      static DeclRefExpr *CreateVarUse(Sema &SemaRef, VarDecl *D) {
+        return DeclRefExpr::Create(SemaRef.getASTContext(),
+                                   NestedNameSpecifierLoc(),
+                                   SourceLocation(), D, false,
+                                   SourceLocation(), D->getType(),
+                                   ExprValueKind::VK_LValue);
+      }
   };
 }
 
@@ -2470,10 +2479,7 @@ namespace {
       if (Temp ||  S.CheckIsNonModifying(Src, Sema::NonModifyingContext::NMC_Unknown,
                                          Sema::NonModifyingMessage::NMM_None)) {
         // TODO: make sure variable being initialized isn't read by Src.
-        DeclRefExpr *TargetDeclRef =
-          DeclRefExpr::Create(S.getASTContext(), NestedNameSpecifierLoc(),
-                              SourceLocation(), D, false, SourceLocation(),
-                              D->getType(), ExprValueKind::VK_LValue);
+        DeclRefExpr *TargetDeclRef = ExprCreatorUtil::CreateVarUse(S, D);
         CastKind Kind;
         QualType TargetTy;
         if (D->getType()->isArrayType()) {
