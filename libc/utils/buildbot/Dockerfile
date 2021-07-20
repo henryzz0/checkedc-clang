@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:buster-20210621-slim
 
 # Installing dependencies.
 RUN dpkg --add-architecture i386
